@@ -1,0 +1,11 @@
+{
+  "name": "api_rest",
+  "type": "module",
+  "author": "Iago Chaves",
+  "version": "1.0.0",
+  "description": "Essa e um exemplo de como criar uma api rest utilizando o express e o node.",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
+}
