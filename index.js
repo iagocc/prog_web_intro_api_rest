@@ -1,50 +1,54 @@
 import express from "express"
+import postgresql from 'pg'
 
-const news = [
-  {
-    "id": 1,
-    "titulo": "Bem vindo ao jornal!",
-    "texto": "Primeira notícia do jornal..."
-  },
-  {
-    "id": 2,
-    "titulo": "Bem vindo ao jornal 2!",
-    "texto": "Segunda notícia do jornal..."
-  },
-  {
-    "id": 3,
-    "titulo": "Bem vindo ao jornal 3!",
-    "texto": "Terceira notícia do jornal..."
-  },
-]
+const { Client } = postgresql
+const credentials = {
+  user: 'postgres',
+  host: 'localhost',
+  database: 'aula0',
+  password: 'postgrespw',
+  port: 49153
+}
 
 const app = express()
 app.use(express.urlencoded({ extended: true }))
 
-app.get("/noticia", function(req, res) {
-  res.json(news)
+app.get("/noticia", async function(req, res) {
+  const client = new Client(credentials)
+  client.connect()
+  const news = await client.query('SELECT * FROM noticia')
+  await client.end()
+  res.json(news.rows)
 })
 
-function selectNewsById(newsId) {
-  return news.filter(newsItem => newsItem.id === newsId)
+async function selectNewsById(newsId) {
+  const client = new Client(credentials)
+  client.connect()
+  const news = await client.query('SELECT * FROM noticia WHERE id = $1', [newsId])
+  await client.end()
+  return news.rows
 }
 
-app.get("/noticia/:id", function(req, res) {
+app.get("/noticia/:id", async function(req, res) {
   const newsId = parseInt(req.params.id)
-  const selectedNews = selectNewsById(newsId)
+  const selectedNews = await selectNewsById(newsId)
   res.json(selectedNews)
 })
 
-app.post("/noticia", function(req, res) {
+app.post("/noticia", async function(req, res) {
   const newNews = {
-    "id": parseInt(req.body.id),
     "titulo": req.body.titulo,
     "texto": req.body.texto
   }
-  news.push(newNews)
-  res.send(newNews)
+
+  const client = new Client(credentials)
+  client.connect()
+  const news = await client.query('INSERT INTO noticia (titulo, texto) VALUES ($1, $2) RETURNING *', [newNews.titulo, newNews.texto])
+  client.end()
+
+  res.json(newNews)
 })
 
-app.listen(8080, function() {
+app.listen(4000, function() {
   console.log("Servidor rodando")
 })
